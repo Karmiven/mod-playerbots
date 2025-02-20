@@ -2314,7 +2314,7 @@ void RandomItemMgr::BuildAmmoCache()
         {
             QueryResult results = WorldDatabase.Query(
                 "SELECT entry, Flags FROM item_template WHERE class = {} AND subclass = {} AND RequiredLevel <= {} and duration = 0 "
-                "ORDER BY stackable DESC, RequiredLevel DESC",
+                "ORDER BY stackable DESC, ItemLevel DESC",
                 ITEM_CLASS_PROJECTILE, subClass, level);
             if (!results)
                 continue;
@@ -2327,17 +2327,16 @@ void RandomItemMgr::BuildAmmoCache()
                 {
                     continue;
                 }
-                ammoCache[level][subClass] = entry;
+                ammoCache[level][subClass].push_back(entry);
                 ++counter;
-                break;
             } while (results->NextRow());
         }
     }
 
-    LOG_INFO("server.loading", "Cached {} types of ammo", counter);  // TEST
+    LOG_INFO("server.loading", "Cached {} ammo", counter);  // TEST
 }
 
-uint32 RandomItemMgr::GetAmmo(uint32 level, uint32 subClass) { return ammoCache[level][subClass]; }
+std::vector<uint32> RandomItemMgr::GetAmmo(uint32 level, uint32 subClass) { return ammoCache[level][subClass]; }
 
 void RandomItemMgr::BuildPotionCache()
 {

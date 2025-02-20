@@ -626,6 +626,9 @@ void PlayerbotFactory::AddConsumables()
 
 void PlayerbotFactory::InitPetTalents()
 {
+    if (bot->GetLevel() <= 70 && sPlayerbotAIConfig->limitTalentsExpansion)
+        return;
+
     Pet* pet = bot->GetPet();
     if (!pet)
     {
@@ -2804,7 +2807,31 @@ void PlayerbotFactory::InitAmmo()
     if (!subClass)
         return;
 
-    uint32 entry = sRandomItemMgr->GetAmmo(level, subClass);
+    std::vector<uint32> ammoEntryList = sRandomItemMgr->GetAmmo(level, subClass);
+    uint32 entry = 0;
+    for (uint32 tEntry : ammoEntryList)
+    {
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(tEntry);
+        if (!proto)
+            continue;
+
+        if (gearScoreLimit != 0 && CalcMixedGearScore(proto->ItemLevel, proto->Quality) > gearScoreLimit)
+            continue;
+        
+        // disable next expansion ammo
+        if (sPlayerbotAIConfig->limitGearExpansion && bot->GetLevel() <= 60 && tEntry >= 23728)
+            continue;
+        
+        if (sPlayerbotAIConfig->limitGearExpansion && bot->GetLevel() <= 70 && tEntry >= 35570)
+            continue;
+        
+        entry = tEntry;
+        break;
+    }
+
+    if (!entry)
+        return;
+
     uint32 count = bot->GetItemCount(entry);
     uint32 maxCount = bot->getClass() == CLASS_HUNTER ? 6000 : 1000;
 
